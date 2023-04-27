@@ -1,5 +1,4 @@
-import React from "react";
-
+import React, { useState } from "react";
 import axios from "axios";
 
 // Suggested initial states
@@ -15,7 +14,7 @@ const initialState = {
   steps: initialSteps,
 };
 
-class AppClass extends React.Component {
+export default class AppClass extends React.Component {
   constructor() {
     super();
     this.state = {
@@ -55,7 +54,6 @@ class AppClass extends React.Component {
       });
     }
   };
-
   goDown = (e) => {
     if (
       this.state.index !== 6 &&
@@ -97,7 +95,6 @@ class AppClass extends React.Component {
       });
     }
   };
-
   goRight = (e) => {
     if (
       this.state.index !== 2 &&
@@ -146,7 +143,7 @@ class AppClass extends React.Component {
       email: this.state.email,
     };
     this.setState({ ...this.state, email: initialEmail });
-    if (this.state.email !== "") {
+    if (email !== "") {
       axios
         .post("http://localhost:9000/api/result", dataToSend)
         .then((res) => {
@@ -159,7 +156,7 @@ class AppClass extends React.Component {
           }
         });
       this.setState({ ...this.state, email: "" });
-    } else if (this.state.email === "") {
+    } else if (email === "") {
       this.setState({ ...this.state, message: "Ouch: email is required" });
     }
   };
@@ -221,5 +218,3 @@ class AppClass extends React.Component {
     );
   }
 }
-
-export default AppClass;

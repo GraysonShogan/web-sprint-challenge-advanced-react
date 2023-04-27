@@ -1,136 +1,156 @@
 import React, { useState } from "react";
+import axios from "axios";
 
-const initialState = {
-  message: "",
-  email: "",
-  steps: 0,
-  index: 4,
-};
+// Suggested initial states
+const initialMessage = "";
+const initialEmail = "";
+const initialSteps = 0;
+const initialIndex = 4; // the index the "B" is at
 
 export default function AppFunctional(props) {
-  const [state, setState] = useState(initialState);
+  const [steps, setSteps] = useState(initialSteps);
+  const [email, setEmail] = useState(initialEmail);
+  const [message, setMessage] = useState(initialMessage);
+  const [index, setIndex] = useState(initialIndex);
+  const [x, setX] = useState(2);
+  const [y, setY] = useState(2);
 
-  function getXY(index) {
-    const row = Math.floor(index / 3);
-    const col = index % 3;
-    return { x: col + 1, y: row + 1 };
-  }
-
-  function getXYMessage(index) {
-    const { x, y } = getXY(index);
-    return `Coordinates (${x}, ${y})`;
-  }
-
-  function reset() {
-    setState(initialState);
-  }
-
-  function getNextIndex(direction) {
-    const { index } = state;
-    const [x, y] = [index % 3, Math.floor(index / 3)];
-    const nextIndexes = {
-      left: x === 0 ? index : index - 1,
-      up: y === 0 ? index : index - 3,
-      right: x === 2 ? index : index + 1,
-      down: y === 2 ? index : index + 3,
-    };
-    return nextIndexes[direction] ?? index;
-  }
-
-  function move(evt) {
-    const direction = evt.target.dataset.direction;
-    const nextIndex = getNextIndex(direction);
-    setState({
-      ...state,
-      message: getXYMessage(nextIndex),
-      steps: state.steps + 1,
-      index: nextIndex,
-    });
-  }
+  // THE FOLLOWING HELPERS ARE JUST RECOMMENDATIONS.
+  // You can delete them and build your own logic from scratch.
 
   function onChange(evt) {
-    const email = evt.target.value;
-    setState({
-      ...state,
-      email: email,
-    });
+    setEmail(evt.target.value);
   }
 
   function onSubmit(evt) {
     evt.preventDefault();
 
-    const payload = {
-      x: getXY(state.index).x,
-      y: getXY(state.index).y,
-      steps: state.steps,
-      email: state.email,
+    const dataToSend = {
+      x: x,
+      y: y,
+      steps: steps,
+      email: email,
     };
 
-    fetch("/api/result", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Unprocessable Entity");
-        }
-        return response.json();
-      })
-      .then((data) => {
-        console.log(data);
-        // Do something with the response data
-      })
-      .catch((error) => {
-        console.error("There was an error:", error);
-      });
+    setEmail(initialEmail);
+    if (4 > x && x > 0 && 4 > y && y > 0 && steps > 0 && email !== "") {
+      axios
+        .post("http://localhost:9000/api/result", dataToSend)
+        .then((res) => {
+          setMessage(res.data.message);
+        })
+        .catch((err) => {
+          if (err) {
+            setMessage(err.request.response);
+          }
+        });
+    } else if (email === "") {
+      setMessage("Ouch: email is required");
+    } else {
+      setMessage("Ouch: email must be a valid email");
+    }
   }
+
+  function reset() {
+    setSteps(initialSteps);
+    setIndex(initialIndex);
+    setMessage(initialMessage);
+    setEmail(initialEmail);
+    setX(2);
+    setY(2);
+  }
+
+  const goUp = (evt) => {
+    if (index !== 0 && index !== 1 && index !== 2) {
+      setIndex(index - 3);
+      addStep();
+      setY(y - 1);
+      setMessage(initialMessage);
+    } else {
+      setMessage(`You can't go ${evt.target.id}`);
+    }
+  };
+
+  const goDown = (evt) => {
+    if (index !== 6 && index !== 7 && index !== 8) {
+      setIndex(index + 3);
+      addStep();
+      setY(y + 1);
+      setMessage(initialMessage);
+    } else {
+      setMessage(`You can't go ${evt.target.id}`);
+    }
+  };
+
+  const goLeft = (evt) => {
+    if (index !== 0 && index !== 3 && index !== 6) {
+      setIndex(index - 1);
+      addStep();
+      setX(x - 1);
+      setMessage(initialMessage);
+    } else {
+      setMessage(`You can't go ${evt.target.id}`);
+    }
+  };
+  const goRight = (evt) => {
+    if (index !== 2 && index !== 5 && index !== 8) {
+      setIndex(index + 1);
+      addStep();
+      setX(x + 1);
+      setMessage(initialMessage);
+    } else {
+      setMessage(`You can't go ${evt.target.id}`);
+    }
+  };
+
+  const addStep = () => {
+    setSteps(steps + 1);
+  };
 
   return (
     <div id="wrapper" className={props.className}>
       <div className="info">
-        <h3 id="coordinates">{getXYMessage(state.index)}</h3>
-        <h3 id="steps">You moved {state.steps} times</h3>
+        <h3 id="coordinates">
+          Coordinates ({x}, {y})
+        </h3>
+        <h3 id="steps">
+          You moved {steps} {steps === 1 ? "time" : "times"}
+        </h3>
       </div>
       <div id="grid">
         {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((idx) => (
-          <div
-            key={idx}
-            className={`square${idx === state.index ? " active" : ""}`}
-          >
-            {idx === 4 ? "B" : null}
+          <div key={idx} className={`square${idx === index ? " active" : ""}`}>
+            {idx === index ? "B" : null}
           </div>
         ))}
       </div>
       <div className="info">
-        <h3 id="message">{state.message}</h3>
+        <h3 id="message">{message}</h3>
       </div>
       <div id="keypad">
-        <button id="left" onClick={move} data-direction="left">
+        <button onClick={goLeft} id="left">
           LEFT
         </button>
-        <button id="up" onClick={move} data-direction="up">
+        <button onClick={goUp} id="up">
           UP
         </button>
-        <button id="right" onClick={move} data-direction="right">
+        <button onClick={goRight} id="right">
           RIGHT
         </button>
-        <button id="down" onClick={move} data-direction="down">
+        <button onClick={goDown} id="down">
           DOWN
         </button>
-        <button id="reset" onClick={reset}>
+        <button onClick={reset} id="reset">
           reset
         </button>
       </div>
       <form onSubmit={onSubmit}>
         <input
+          onChange={onChange}
+          value={email}
           id="email"
           type="email"
           placeholder="type email"
-          value={state.email}
-          onChange={onChange}
         ></input>
         <input id="submit" type="submit"></input>
       </form>
