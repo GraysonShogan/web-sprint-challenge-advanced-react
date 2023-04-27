@@ -30,22 +30,64 @@ export default function AppFunctional(props) {
   }
 
   function getNextIndex(direction) {
-    // This helper takes a direction ("left", "up", etc) and calculates what the next index
-    // of the "B" would be. If the move is impossible because we are at the edge of the grid,
-    // this helper should return the current index unchanged.
+    const { index } = state;
+    const [x, y] = [index % 3, Math.floor(index / 3)];
+    const nextIndexes = {
+      left: x === 0 ? index : index - 1,
+      up: y === 0 ? index : index - 3,
+      right: x === 2 ? index : index + 1,
+      down: y === 2 ? index : index + 3,
+    };
+    return nextIndexes[direction] ?? index;
   }
 
   function move(evt) {
-    // This event handler can use the helper above to obtain a new index for the "B",
-    // and change any states accordingly.
+    const direction = evt.target.dataset.direction;
+    const nextIndex = getNextIndex(direction);
+    setState({
+      ...state,
+      message: getXYMessage(nextIndex),
+      steps: state.steps + 1,
+      index: nextIndex,
+    });
   }
 
   function onChange(evt) {
-    // You will need this to update the value of the input.
+    setState({
+      ...state,
+      email: evt.target.value,
+    });
   }
 
   function onSubmit(evt) {
-    // Use a POST request to send a payload to the server.
+    evt.preventDefault();
+
+    const payload = {
+      message: state.message,
+      email: state.email,
+      steps: state.steps,
+    };
+
+    fetch("/api/submit", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        console.log(data);
+        // Do something with the response data
+      })
+      .catch((error) => {
+        console.error("There was an error:", error);
+      });
   }
 
   return (
