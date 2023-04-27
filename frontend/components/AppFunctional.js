@@ -1,17 +1,13 @@
 import React, { useState } from "react";
 
-// Suggested initial states
 const initialState = {
   message: "",
   email: "",
   steps: 0,
   index: 4,
 };
-// the index the "B" is at
 
 export default function AppFunctional(props) {
-  // THE FOLLOWING HELPERS ARE JUST RECOMMENDATIONS.
-  // You can delete them and build your own logic from scratch.
   const [state, setState] = useState(initialState);
 
   function getXY(index) {
@@ -53,9 +49,10 @@ export default function AppFunctional(props) {
   }
 
   function onChange(evt) {
+    const email = evt.target.value;
     setState({
       ...state,
-      email: evt.target.value,
+      email: email,
     });
   }
 
@@ -63,12 +60,13 @@ export default function AppFunctional(props) {
     evt.preventDefault();
 
     const payload = {
-      message: state.message,
-      email: state.email,
+      x: getXY(state.index).x,
+      y: getXY(state.index).y,
       steps: state.steps,
+      email: state.email,
     };
 
-    fetch("/api/submit", {
+    fetch("/api/result", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -77,7 +75,7 @@ export default function AppFunctional(props) {
     })
       .then((response) => {
         if (!response.ok) {
-          throw new Error("Network response was not ok");
+          throw new Error("Unprocessable Entity");
         }
         return response.json();
       })
@@ -93,28 +91,47 @@ export default function AppFunctional(props) {
   return (
     <div id="wrapper" className={props.className}>
       <div className="info">
-        <h3 id="coordinates">Coordinates (2, 2)</h3>
-        <h3 id="steps">You moved 0 times</h3>
+        <h3 id="coordinates">{getXYMessage(state.index)}</h3>
+        <h3 id="steps">You moved {state.steps} times</h3>
       </div>
       <div id="grid">
         {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((idx) => (
-          <div key={idx} className={`square${idx === 4 ? " active" : ""}`}>
+          <div
+            key={idx}
+            className={`square${idx === state.index ? " active" : ""}`}
+          >
             {idx === 4 ? "B" : null}
           </div>
         ))}
       </div>
       <div className="info">
-        <h3 id="message"></h3>
+        <h3 id="message">{state.message}</h3>
       </div>
       <div id="keypad">
-        <button id="left">LEFT</button>
-        <button id="up">UP</button>
-        <button id="right">RIGHT</button>
-        <button id="down">DOWN</button>
-        <button id="reset">reset</button>
+        <button id="left" onClick={move} data-direction="left">
+          LEFT
+        </button>
+        <button id="up" onClick={move} data-direction="up">
+          UP
+        </button>
+        <button id="right" onClick={move} data-direction="right">
+          RIGHT
+        </button>
+        <button id="down" onClick={move} data-direction="down">
+          DOWN
+        </button>
+        <button id="reset" onClick={reset}>
+          reset
+        </button>
       </div>
-      <form>
-        <input id="email" type="email" placeholder="type email"></input>
+      <form onSubmit={onSubmit}>
+        <input
+          id="email"
+          type="email"
+          placeholder="type email"
+          value={state.email}
+          onChange={onChange}
+        ></input>
         <input id="submit" type="submit"></input>
       </form>
     </div>
